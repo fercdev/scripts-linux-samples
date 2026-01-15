@@ -1,0 +1,16 @@
+1- Levantar Docker Desktop --> service docker
+
+2- Levantar el container 
+ 2.1 - Para listar todos los containers en docker se usa el comando 
+        docker ps -a 
+
+ 2.2 - En caso tengas un container que tiene el mismo nombre "ubuntu-lab"
+    -> removerlo con el comando: docker rm "4823e84f7070" --> tener en cuenta que el Id es variable
+
+ 2.2 - Levnatar el nuevo container 
+    -> docker run -it --name ubuntu-lab ubuntu bash 
+
+PARA INSTALAR NANO (EDITOR)
+
+apt update && apt install nano -y
+

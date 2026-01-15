@@ -1,0 +1,19 @@
+1- apt update && apt install cron -y   
+
+    En caso no tengmos cron instalado, proceder a instalarlo 
+        zona geografica --> america
+        zona especifica --> lima --> 85
+
+
+
+2- service cron start  --> inicializas el servicio
+
+3- crontab -e  --> para abrir el archivo donde agregaremos nuestro cronjob
+
+4- ruta de mi script:
+    -> /home/ubuntu/scripts/cronejemplos/scriptcron.sh   --> importante darte la ruta completa de mi script 
+
+
+5- ps aux | grep cron   --> para listar el servicio cron en ejecucion 
+
+6- crontab -l   --> para listar el cronjob 
