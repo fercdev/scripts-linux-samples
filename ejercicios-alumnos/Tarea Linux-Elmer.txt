@@ -1,0 +1,205 @@
+1 teniendoen cuenta la  ruta  crear un nuevo scriot que se encarge de crear un nuevo archivo(archivo.txt) en el cual el contendido del
+archivo generado considere lo siguiente
+vamos a obtenere la primera columna de lada liena
+vamos a ordenar de manera inversa de z - a 
+que primero se inserte un titulo con el nombre reporteria(fecha y hora ejecucion)
+
+crear
+nano crear_reporte.sh
+
+#!/bin/bash
+
+# Archivo de salida en el directorio actual
+ARCHIVO_SALIDA="archivo.txt"
+
+# Obtener fecha y hora actual
+FECHA_HORA=$(date '+%Y-%m-%d %H:%M:%S')
+
+# 1. PRIMERO insertar el título con reportería(fecha y hora ejecución)
+echo "=========================================" > "$ARCHIVO_SALIDA"
+echo "REPORTERÍA - Fecha y hora de ejecución: $FECHA_HORA" >> "$ARCHIVO_SALIDA"
+echo "=========================================" >> "$ARCHIVO_SALIDA"
+echo "" >> "$ARCHIVO_SALIDA"
+
+# 2. LUEGO agregar los usuarios ordenados de Z-A
+echo "LISTA DE USUARIOS (orden Z-A):" >> "$ARCHIVO_SALIDA"
+echo "-------------------------------" >> "$ARCHIVO_SALIDA"
+cut -d: -f1 /etc/passwd | sort -r >> "$ARCHIVO_SALIDA"
+
+# 3. Finalmente agregar el pie con el total
+echo "" >> "$ARCHIVO_SALIDA"
+echo "=========================================" >> "$ARCHIVO_SALIDA"
+echo "TOTAL DE USUARIOS: $(cut -d: -f1 /etc/passwd | wc -l)" >> "$ARCHIVO_SALIDA"
+echo "Archivo generado: $FECHA_HORA" >> "$ARCHIVO_SALIDA"
+echo "=========================================" >> "$ARCHIVO_SALIDA"
+
+echo "✅ Reporte generado exitosamente en: $(pwd)/$ARCHIVO_SALIDA"
+
+
+
+
+
+permisos 
+chmod +x crear_reporte.sh
+
+ejecutar 
+./crear_reporte.sh
+
+
+# Extraer primera columna de /etc/passwd
+cut -d: -f1 /etc/passwd
+
+# Extraer primera columna y ordenar de Z a A
+cut -d: -f1 /etc/passwd | sort -r
+
+# Conteo de usuarios
+cut -d: -f1 /etc/passwd | wc -l
+
+# Ver contenido actual de /etc/passwd
+head -n 5 /etc/passwd
+
+###############################################################################################
+
+
+2  teniendo en cuenta la ruta /home/ubuntu/script  
+   crear un cronjob que de encarge de crea un backup en la ruta 
+   /home/ubuntu/backups de manera que periodicamente cada 3 minutos
+(puedes usar el comando tar o zip )
+nombre ddebe tenere anomesdiahora-min-seg.zip 
+
+# Actualizar repositorios e instalar zip
+apt-get update && apt-get install -y zip
+# También instalar cron si no está
+apt-get install -y cron
+
+
+# Ir al directorio home de ubuntu
+cd /home/ubuntu
+
+# Crear directorio para scripts  -p // errores
+mkdir -p script
+
+# Crear directorio para backups
+mkdir -p backups
+
+# Ir al directorio de scripts
+cd script
+
+# Crear el script
+nano backup_script.sh
+
+#!/bin/bash
+
+# Script de backup automático
+# Ruta donde se guardarán los backups
+BACKUP_DIR="/home/ubuntu/backups"
+
+# Nombre del archivo con formato: AñoMesDiaHora-Minuto-Segundo.zip
+BACKUP_NAME=$(date '+%Y%m%d%H-%M-%S')
+BACKUP_FILE="$BACKUP_DIR/$BACKUP_NAME.zip"
+
+# Directorio a respaldar (puedes cambiar esto según necesites)
+# Ejemplo: respaldar el directorio actual de scripts
+SOURCE_DIR="/home/ubuntu/script"
+
+# Crear el backup
+echo "======================================"
+echo "INICIANDO BACKUP: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "======================================"
+
+# Verificar si existe el directorio de backups
+if [ ! -d "$BACKUP_DIR" ]; then
+    mkdir -p "$BACKUP_DIR"
+    echo "✓ Directorio de backups creado: $BACKUP_DIR"
+fi
+
+# Crear el archivo zip con el backup
+if zip -r "$BACKUP_FILE" "$SOURCE_DIR" > /dev/null 2>&1; then
+    echo "✓ Backup creado exitosamente"
+    echo "✓ Archivo: $BACKUP_FILE"
+    
+    # Mostrar información del archivo creado
+    FILE_SIZE=$(du -h "$BACKUP_FILE" | cut -f1)
+    echo "✓ Tamaño: $FILE_SIZE"
+else
+    echo "✗ Error al crear el backup"
+    exit 1
+fi
+
+# Limpiar backups antiguos (opcional, mantiene solo los últimos 10)
+echo "======================================"
+echo "LIMPIEZA DE BACKUPS ANTIGUOS"
+echo "======================================"
+
+# Contar backups existentes
+BACKUP_COUNT=$(ls -1 "$BACKUP_DIR"/*.zip 2>/dev/null | wc -l)
+echo "Backups existentes: $BACKUP_COUNT"
+
+# Mantener solo los últimos 10 backups
+if [ $BACKUP_COUNT -gt 10 ]; then
+    ls -1t "$BACKUP_DIR"/*.zip | tail -n +11 | while read old_backup; do
+        rm "$old_backup"
+        echo "✓ Eliminado: $(basename "$old_backup")"
+    done
+fi
+
+echo "======================================"
+echo "BACKUP COMPLETADO: $(date '+%Y-%m-%d %H:%M:%S')"
+echo "======================================"
+
+
+
+
+#permisos
+chmod +x backup_script.sh
+# Ejecutar el script
+./backup_script.sh
+
+# Verificar que se creó el backup
+ls -la /home/ubuntu/backups/
+
+# Ver contenido del backup (opcional)
+unzip -l /home/ubuntu/backups/*.zip | head -20
+
+### Configurar el cronjob
+
+# Editar el archivo crontab
+crontab -e
+
+### Agregar la tarea programada
+
+# Ejecutar backup cada 3 minutos
+*/3 * * * * /home/ubuntu/script/backup_script.sh >> /home/ubuntu/backup_log.txt 2>&1
+
+### Verificar que el cronjob se configuró correctamente
+
+# Listar cronjobs activos
+crontab -l
+
+# Ver estado del servicio cron
+service cron status
+
+# Si el servicio no está activo, iniciarlo
+service cron start
+
+# Habilitar para que inicie automáticamente
+systemctl enable cron
+
+### Verificar el funcionamiento
+
+# Ver el log de ejecuciones
+tail -f /home/ubuntu/backup_log.txt
+
+# Listar backups creados (espera 3 minutos para el primero)
+watch -n 30 "ls -la /home/ubuntu/backups/"
+
+# Ver hora actual para saber cuándo se ejecutará
+date
+
+Para detener el cronjob:
+
+# Editar y eliminar la línea del cronjob
+crontab -e
+
+# O eliminar todos los cronjobs
+crontab -r
